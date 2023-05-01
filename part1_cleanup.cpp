@@ -1,13 +1,12 @@
 //---------------------------------------------------------------------
 //   Authors: Bryan Medina, Cristopher Briseno, Oscar Hernandez
-//   Assignment  : No.5
-//   Due Date    : 3/2/23
-//   Description : Program cleans up text document by removing leading
-//                  whitespace, comments, and any trailing whitespace
-//                  as well. It also adds a space between each token.
-//                  Condenses number of lines to only include necessary
-//                  information. Varies indenting based on type of content
-//                  on each line. Outputs to a text file labeled "newh5.txt".
+//   Assignment  : Final Project - Part 1
+//   Due Date    : May 2023
+//   Description : Cleans up text file to remove any extra
+//                  whitespaces, includes a space between
+//                  each token, removes comments and 
+//                  blank lines, and leaves one space before
+//                  and after each token.
 //---------------------------------------------------------------------
 #include <iostream>
 #include <string>
@@ -16,111 +15,116 @@
 
 using namespace std;
 
+void leftTrim(string& current);
+void rightTrim(string& current);
+
 int main()
 {
      fstream original;
-     original.open("h5.txt", ios::in);
+     original.open("finalp1.txt", ios::in);
      string token;
 
-     ofstream newFile("newh5.txt");
+     ofstream newFile("finalp2.txt");
 
      if (original.is_open())
      {
           getline(original, token);
           bool isComment = false;
-          int starCount = 0;
           while (original)
           {
-               string toAdd;
-               // removes leading whitespace
-               size_t leadingWS = token.find_first_not_of(" ");
-               bool endOfLine = false;
-               for (int i = leadingWS; i < token.size(); ++i)
+               // If line is not blank, perform the following
+               if (token.size() > 0)
                {
-                    int spaceCount = 0;
-                    if (token[i] == ';')
+                    leftTrim(token);
+                    rightTrim(token);
+                    size_t semicolon = token.find(';');
+                    // If line contains semicolon, create substring ending
+                    // at that ';' position
+                    if (semicolon != string::npos)
                     {
-                         endOfLine = true;
+                         token = token.substr(0, semicolon + 1);
                     }
-                    if (i == 0 || i == leadingWS)
+                    // If line begins with a comment or is the ending
+                    // of a comment, remove those lines
+                    if (token.front() == '/' || token.back() == '/')
                     {
-                         endOfLine = false;
-                    }
-                    // looks for start of comment and flags comment
-                    if (token[i] == '*')
-                    {
-                         ++starCount;
                          isComment = true;
-                         
                     }
-                    // iterates through comment until 4th asterisk is reached
-                    while (isComment)
+                    // If line is not a comment, perform the following
+                    if (!isComment)
                     {
-                         ++i;
-                         if (i == token.size())
+                         // Iterate through string
+                         for (size_t i = 0; i < token.size(); ++i)
                          {
-                              getline(original, token);
-                              i = 0;
+                              // If literal string detected, perform the following
+                              if (token[i] == '"')
+                              {
+                                   int newPos = token.find_last_of('"');
+                                   i = newPos;
+                              }
+                              // If whitespace, perform the following
+                              else if (token[i] == ' ')
+                              {
+                                   if (token[i + 1] == ' ')
+                                   {
+                                        token.erase(i, 1);
+                                        --i;
+                                   }
+
+                              }
+                              // If any arithmetic operators, perform the following
+                              else if (token[i] == '+' || token[i] == '-'
+                                   || token[i] == '*' ||
+                                   token[i] == '=' || token[i] == '('
+                                   || token[i] == ')')
+                              {
+                                   if (token[i - 1] != ' ')
+                                   {
+                                        token.insert(i, " ");
+                                        ++i;
+                                   }
+                                   if (token[i + 1] != ' ')
+                                   {
+                                        token.insert(i + 1, " ");
+                                   }
+                              }
+                              else if (token[i] == ';')
+                              {
+                                   if (token[i - 1] != ' ')
+                                   {
+                                        token.insert(i, " ");
+                                        ++i;
+                                   }
+                              }
                          }
-                         else if (token[i] == '*')
+                         // Add token to newFile
+                         newFile << token;
+                         // If buffer has remaining text, add new line
+                         if (original)
                          {
-                              ++starCount;
-                         }
-                         if (starCount == 4)
-                         {
-                              isComment = false;
-                              starCount = 0;
-                              ++i;
-                         }
-                    }
-                    // handles whitespace between tokens to limit it to just 1
-                    if (token[i] == ' ' && !endOfLine)
-                    {
-                         toAdd.push_back(' ');
-                         string restOfString = token.substr(i, token.size() - i);
-                         size_t nextNonSpace = restOfString.find_first_not_of(' ');
-                         i += nextNonSpace;
-                         if (token[i] == '*')
-                         {
-                              ++starCount;
-                         }
-                    }
-                    // adds character in token to string
-                    if ((!endOfLine || token[i] == ';') && token[i] != '*')
-                    {
-                         toAdd.push_back(token[i]);
-                         if ((token[i] == ')') && (token[i+1] == ';'))
-                         {
-                              toAdd.push_back(' ');
+                              newFile << endl;
                          }
                     }
                }
-               // if size < 2, it is assumed just whitespace, clear string
-               if (toAdd.size() < 2)
-               {
-                    toAdd.clear();
-               }
-               // if there is content in string, pushed to file
-               if (!toAdd.empty())
-               {
-                    if (isalpha(toAdd.back()) || toAdd.back() == '.')
-                    {
-                         newFile << string(5, ' ') << toAdd;
-                    }
-                    else
-                    {
-                         newFile << string(10, ' ') << toAdd;
-                    }
-               }
-               // moves to next line
+               // Reset isComment flag
+               isComment = false;
+               // Move onto next line in buffer
                getline(original, token);
-               // if there is content in string and buffer, add new line
-               if (original && !toAdd.empty())
-               {
-                    newFile << endl;
-               }
           }
+
      }
      newFile.close();
      return 0;
+}
+// Removes leading whitespace from line
+void leftTrim(string& current)
+{
+     size_t pos = current.find_first_not_of(" ");
+     current = current.substr(pos);
+}
+// Removes trailing whitespace from line
+void rightTrim(string& current)
+{
+     size_t pos = current.find_last_not_of(" ");
+     current = current.substr(0, pos + 1);
 }

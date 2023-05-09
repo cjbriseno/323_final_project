@@ -1,4 +1,4 @@
-#include "OURFUNCTIONS.h";
+#include "OURFUNCTIONS.h"
 #include <iostream>
 #include <string>
 #include <fstream>

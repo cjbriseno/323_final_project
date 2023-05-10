@@ -1,7 +1,7 @@
 #include <iostream>
 using namespace std;
 
-#program s2023
+//program s2023
 int main()
 {
 int p1, p2q, pr;
